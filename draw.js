@@ -1,5 +1,24 @@
 'use strict';
 
+//Функции без Math
+let abs = Math.abs;
+
+let cos = Math.cos;
+let acos = Math.acos;
+let sin = Math.sin;
+let asin = Math.asin;
+let tan = Math.tan;
+let atan = Math.atan;
+let ctan = (x) => {
+	return 1/Math.tan(x);
+};
+
+let pow = Math.pow;
+let sqrt = Math.sqrt;
+
+let exp = Math.exp;
+let log = Math.log;
+
 //глобальные переменные
 let canvas;
 let ctx;
