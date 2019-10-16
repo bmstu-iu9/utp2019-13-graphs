@@ -66,14 +66,19 @@ const init = () => {
 		let realCurX = minX;
 		while(realCurX<=maxX){
 			const realCurY = expr(realCurX);
-			if((realCurY < minY || minY == undefined) && realCurY!=-Infinity) {
-				minY = realCurY;
-			};
-			if((realCurY > maxY || maxY == undefined)&& realCurY!=Infinity ){
-				maxY = realCurY;
-			};
+			if(!isNaN(realCurY) && realCurY!=-Infinity && realCurY!=Infinity){
+				if(realCurY < minY || minY == undefined) {
+					minY = realCurY;
+				};
+				if(realCurY > maxY || maxY == undefined){
+					maxY = realCurY;
+				};
+			}
 			realCurX = realCurX + deltaX;
 		};
+		if(minY == undefined || maxY == undefined) {
+			throw new Error('Error auto calc Y value');
+		}
 		minY = Math.floor(minY);
 		maxY = Math.ceil(maxY);
 	} else{
@@ -188,8 +193,8 @@ const drawPointLimit = (realPrevX, realCurX, maxDrawPoint) => {
 }
 
 const checkRealY = (realY) => {
-	if( realY == Infinity || realY == -Infinity) {
-		realY = realY;
+	if( isNaN(realY) || realY == Infinity || realY == -Infinity) {
+		return false;
 	}
   	if ( (realY > maxY) || (realY < minY) ) {
 		return false;
