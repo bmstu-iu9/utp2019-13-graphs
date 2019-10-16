@@ -1,42 +1,37 @@
 'use strict';
 
 //глобальные переменные
-var canvas;
-var ctx;
+let canvas;
+let ctx;
 
-var clientHeight; //высота холста
-var clientWidth; //ширина холста
+let clientHeight; //высота холста
+let clientWidth; //ширина холста
 const indent = 50; //отступ от границ
 
-var expr; //функция, полученная от пользователя
+let expr; //функция, полученная от пользователя
 
 //наибольшие и наименьшие значения х и у в координатах функции
-var minX;
-var maxX;
-var minY;
-var maxY;
+let minX;
+let maxX;
+let minY;
+let maxY;
 
-var deltaX; //разница между двумя соседними точками в координатах функции
+let deltaX; //разница между двумя соседними точками в координатах функции
 
 //коэффициенты перехода от СК функции к СК экрана, по умолчанию 1
-var scaleX = 1; 
-var scaleY = 1; 
+let scaleX = 1; 
+let scaleY = 1; 
 
-//выполняется при запуске страницы
-checker();
-
-//запуск при нажатии кнопки
-bttn.onclick = (event) => {
-		//действия, которые необходимо выполнить при нажатии кнопки
-		try{
-			Draw();
-		} catch(err) {
-			result.innerText = err.message;
-		}
-};  
+//функция для очистки переменных 
+const clearVariables = () => {
+	result.innerText = "";
+	minX=maxX=minY=maxY=undefined;
+	deltaX = 0;
+	scaleX = scaleY = 1;
+} 
 
 //базовая функция
-function Draw() {
+const Draw = () => {
 	//подготовка
 	init();
 	
@@ -48,7 +43,7 @@ function Draw() {
 };
 
 //заполнение входных данных и подготовка области для рисования
-function init(){
+const init = () => {
 	canvas=document.getElementById('graph');
 	ctx=canvas.getContext('2d');
 	clientHeight = canvas.clientHeight;
@@ -62,7 +57,7 @@ function init(){
 	//получение наибольших и наименьших х и у (в координатах функции)
 	minX = Number(document.getElementById('minX').value);
 	maxX = Number(document.getElementById('maxX').value);
-	if (minX==NaN || maxX==NaN || minX>=maxX) {
+	if (isNaN(minX) || isNaN(maxX) || minX>=maxX) {
 		throw new Error('Uncorrect X value');
 	};
 	expr = new Function('x', 'return ' + func.value);
@@ -84,7 +79,7 @@ function init(){
 	} else{
 		minY = Number(document.getElementById('minY').value);
 		maxY = Number(document.getElementById('maxY').value);
-		if (minY==NaN || maxY==NaN || minY>=maxY) {
+		if (isNaN(minY) || isNaN(maxY) || minY>=maxY) {
 			throw new Error('Uncorrect Y value');
 		};
 	}
@@ -95,38 +90,110 @@ function init(){
 };
 
 //отрисовка системы координат
-function drawAxesSystem(){};
+const drawAxesSystem = () =>{
+		ctx.strokeStyle = '#000000';
+		ctx.font = "italic 14pt Arial";
+		ctx.fillText(maxY, indent/4,indent);
+		ctx.fillText(minY,indent/4,clientHeight - indent);
+		ctx.fillText(minX,indent*3/4, clientHeight - indent/2);
+		ctx.fillText(maxX,clientWidth - indent*5/4, clientHeight - indent/2);
+		const prop = 5;
+		const zeroX = xChangeToScreen(0);
+		const zeroY = yChangeToScreen(0);
+		if (zeroX >= indent && zeroX<=(clientWidth-indent)) {
+			ctx.beginPath();
+			ctx.moveTo(zeroX, clientHeight-indent);
+			ctx.lineTo(zeroX, indent/2);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.lineTo(zeroX - indent/prop, indent*(prop-1)/prop);
+			ctx.lineTo(zeroX + indent/prop, indent*(prop-1)/prop);
+			ctx.lineTo(zeroX, indent/2);
+			ctx.fill();
+			ctx.fillText("Y", zeroX, indent/2);
+			if(minX!=0 && maxX!=0){
+				ctx.fillText("0", zeroX, clientHeight-indent/2);
+			}
+		}
+		if (zeroY >= indent && zeroY <= (clientHeight - indent)) {
+			ctx.beginPath();
+			ctx.moveTo(indent,zeroY);
+			ctx.lineTo(clientWidth-indent/2,zeroY);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.lineTo(clientWidth-indent*(prop-1)/prop,zeroY - indent/prop);
+			ctx.lineTo(clientWidth-indent*(prop-1)/prop,zeroY + indent/prop)
+			ctx.lineTo(clientWidth-indent/2,zeroY);
+			ctx.fill();
+			ctx.fillText("X", clientWidth-indent/2,zeroY);
+			if(minY!=0 && maxY!=0){
+				ctx.fillText("0", indent/2,zeroY);
+			}
+		}	
+};
 
 //отрисовка графика
-function drawGraph(){
+const drawGraph = () =>{
 			ctx.fillStyle = '#000000';
 			ctx.beginPath();
 
-			let realCurX = minX;
+			let realPrevX = minX;
+			let realCurX = realPrevX;
 			while( realCurX <= maxX) {
-				const scrCurX = xChangeToScreen(realCurX);
-				const realCurY = expr(realCurX);
-				if(realCurY!= Infinity && realCurY != -Infinity){
-					const scrCurY = yChangeToScreen(realCurY);
-					ctx.fillRect(scrCurX, scrCurY, 1, 1);
-				}
-				realCurX = realCurX + deltaX;
+				drawPoint(realPrevX, realCurX);
+				realPrevX = realCurX;
+				realCurX = realPrevX+deltaX;
 			}
 			ctx.stroke();
 };
 
+const drawPoint = (realPrevX, realCurX) => {
+	const realPrevY = expr(realPrevX);
+	const realCurY = expr(realCurX);
+    if ( checkRealY(realPrevY) || checkRealY(realCurY)) {
+		const scrPrevY = yChangeToScreen(realPrevY);
+		const scrCurY = yChangeToScreen(realCurY);
+		const scrMaxDeltaY = 1; // чтобы линия получилась сплошная
+		if ( Math.abs(scrCurY - scrPrevY) <= scrMaxDeltaY) {
+			// Чертим
+			const scrPrevX = xChangeToScreen(realPrevX);
+			const scrCurX = xChangeToScreen(realCurX);
+			
+			// Выводит точки, если scrMaxDeltaY == 1, то получится сплошная линия
+			ctx.fillRect(scrCurX, scrCurY, 1, 1);
+		} else {
+			// Делим на 2 отрезка
+			const realMidX = (realPrevX + realCurX)/2;
+			drawPoint(realPrevX, realMidX);
+			drawPoint(realMidX, realCurX);
+		}		
+		// else Оба Y выходят за диаппазон видимости чертить ничего не надо
+
+	}
+}
+
+const checkRealY = (realY) => {
+	if( realY == Infinity || realY == -Infinity) {
+		realY = realY;
+	}
+  	if ( (realY > maxY) || (realY < minY) ) {
+		return false;
+  	}
+	return true;
+}
+
 //переводит координату х функции в координату х экрана
-function xChangeToScreen(x){
+const xChangeToScreen = (x) =>{
 	return (x-minX)*scaleX + indent;
 }
 
 //переводит координату y функции в координату y экрана
-function yChangeToScreen(y){
+const yChangeToScreen = (y) =>{
 	return (maxY - y)*scaleY + indent;
 }
 
 //проверка галочки auto
-function checker(){
+const checker = () => {
 	let min = document.getElementById('minY');
 	let max = document.getElementById('maxY');
 	if(document.getElementById('check').checked){
@@ -138,4 +205,20 @@ function checker(){
 	}
 	//min.value ="";
 	//max.value ="";
-}
+}	
+
+
+//выполняется при запуске страницы
+checker();
+
+//запуск при нажатии кнопки
+bttn.onclick = (event) => {
+		//подготовка
+		clearVariables();
+		//отрисовка
+		try{
+			Draw();
+		} catch(err) {
+			result.innerText = err.message;
+		}
+}; 
