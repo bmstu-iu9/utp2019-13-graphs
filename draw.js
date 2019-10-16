@@ -90,7 +90,47 @@ const init = () => {
 };
 
 //отрисовка системы координат
-const drawAxesSystem = () =>{};
+const drawAxesSystem = () =>{
+		ctx.strokeStyle = '#000000';
+		ctx.font = "italic 14pt Arial";
+		ctx.fillText(maxY, indent/4,indent);
+		ctx.fillText(minY,indent/4,clientHeight - indent);
+		ctx.fillText(minX,indent*3/4, clientHeight - indent/2);
+		ctx.fillText(maxX,clientWidth - indent*5/4, clientHeight - indent/2);
+		const prop = 5;
+		const zeroX = xChangeToScreen(0);
+		const zeroY = yChangeToScreen(0);
+		if (zeroX >= indent && zeroX<=(clientWidth-indent)) {
+			ctx.beginPath();
+			ctx.moveTo(zeroX, clientHeight-indent);
+			ctx.lineTo(zeroX, indent/2);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.lineTo(zeroX - indent/prop, indent*(prop-1)/prop);
+			ctx.lineTo(zeroX + indent/prop, indent*(prop-1)/prop);
+			ctx.lineTo(zeroX, indent/2);
+			ctx.fill();
+			ctx.fillText("Y", zeroX, indent/2);
+			if(minX!=0 && maxX!=0){
+				ctx.fillText("0", zeroX, clientHeight-indent/2);
+			}
+		}
+		if (zeroY >= indent && zeroY <= (clientHeight - indent)) {
+			ctx.beginPath();
+			ctx.moveTo(indent,zeroY);
+			ctx.lineTo(clientWidth-indent/2,zeroY);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.lineTo(clientWidth-indent*(prop-1)/prop,zeroY - indent/prop);
+			ctx.lineTo(clientWidth-indent*(prop-1)/prop,zeroY + indent/prop)
+			ctx.lineTo(clientWidth-indent/2,zeroY);
+			ctx.fill();
+			ctx.fillText("X", clientWidth-indent/2,zeroY);
+			if(minY!=0 && maxY!=0){
+				ctx.fillText("0", indent/2,zeroY);
+			}
+		}	
+};
 
 //отрисовка графика
 const drawGraph = () =>{
