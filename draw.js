@@ -66,14 +66,19 @@ const init = () => {
 		let realCurX = minX;
 		while(realCurX<=maxX){
 			const realCurY = expr(realCurX);
-			if((realCurY < minY || minY == undefined) && realCurY!=-Infinity) {
-				minY = realCurY;
-			};
-			if((realCurY > maxY || maxY == undefined)&& realCurY!=Infinity ){
-				maxY = realCurY;
-			};
+			if(!isNaN(realCurY) && realCurY!=-Infinity && realCurY!=Infinity){
+				if(realCurY < minY || minY == undefined) {
+					minY = realCurY;
+				};
+				if(realCurY > maxY || maxY == undefined){
+					maxY = realCurY;
+				};
+			}
 			realCurX = realCurX + deltaX;
 		};
+		if(minY == undefined || maxY == undefined) {
+			throw new Error('Error auto calc Y value');
+		}
 		minY = Math.floor(minY);
 		maxY = Math.ceil(maxY);
 	} else{
@@ -140,41 +145,56 @@ const drawGraph = () =>{
 			let realPrevX = minX;
 			let realCurX = realPrevX;
 			while( realCurX <= maxX) {
-				drawPoint(realPrevX, realCurX);
+				drawPointLimit(realPrevX, realCurX, 2*clientHeight);
 				realPrevX = realCurX;
 				realCurX = realPrevX+deltaX;
 			}
 			ctx.stroke();
 };
 
-const drawPoint = (realPrevX, realCurX) => {
-	const realPrevY = expr(realPrevX);
-	const realCurY = expr(realCurX);
-    if ( checkRealY(realPrevY) || checkRealY(realCurY)) {
-		const scrPrevY = yChangeToScreen(realPrevY);
-		const scrCurY = yChangeToScreen(realCurY);
-		const scrMaxDeltaY = 1; // чтобы линия получилась сплошная
-		if ( Math.abs(scrCurY - scrPrevY) <= scrMaxDeltaY) {
-			// Чертим
-			const scrPrevX = xChangeToScreen(realPrevX);
-			const scrCurX = xChangeToScreen(realCurX);
-			
-			// Выводит точки, если scrMaxDeltaY == 1, то получится сплошная линия
-			ctx.fillRect(scrCurX, scrCurY, 1, 1);
-		} else {
-			// Делим на 2 отрезка
-			const realMidX = (realPrevX + realCurX)/2;
-			drawPoint(realPrevX, realMidX);
-			drawPoint(realMidX, realCurX);
-		}		
-		// else Оба Y выходят за диаппазон видимости чертить ничего не надо
+const epsEqu = (x, y) => {
+    return Math.abs(x - y) < Number.EPSILON * Math.max(Math.abs(x), Math.abs(y));
+}
 
+const drawPointLimit = (realPrevX, realCurX, maxDrawPoint) => {
+	let countDrawPoiunt = 0;
+
+	const drawPoint = (realPrevX, realCurX) => {
+		if (countDrawPoiunt >= maxDrawPoint ) {
+			return; // Если у нас колебaтельные движения, то надо ограничить количество рассчитываемых точек
+		}
+		const realPrevY = expr(realPrevX);
+		const realCurY = expr(realCurX);
+		if ((checkRealY(realPrevY) || checkRealY(realCurY))) {
+			const scrPrevY = yChangeToScreen(realPrevY);
+			const scrCurY = yChangeToScreen(realCurY);
+			const scrMaxDeltaY = 1; // чтобы линия получилась сплошная
+			if ( Math.abs(scrCurY - scrPrevY) <= scrMaxDeltaY) {
+				const scrPrevX = xChangeToScreen(realPrevX);
+				const scrCurX = xChangeToScreen(realCurX);
+
+				// Выводит точки, если scrMaxDeltaY == 1, то получится сплошная линия
+				ctx.fillRect(scrCurX, scrCurY, 1, 1);
+				++countDrawPoiunt;
+			} else {
+				if (epsEqu(realCurX,realPrevX)) {
+					// Мы достигли предела точности
+					drawPoint(realCurX, realCurX);
+				} else {			
+					// Делим на 2 отрезка
+					const realMidX = (realPrevX + realCurX)/2;
+					drawPoint(realPrevX, realMidX);
+					drawPoint(realMidX, realCurX);
+				}
+			}		
+		}
 	}
+	drawPoint(realPrevX, realCurX);
 }
 
 const checkRealY = (realY) => {
-	if( realY == Infinity || realY == -Infinity) {
-		realY = realY;
+	if( isNaN(realY) || realY == Infinity || realY == -Infinity) {
+		return false;
 	}
   	if ( (realY > maxY) || (realY < minY) ) {
 		return false;
@@ -184,12 +204,12 @@ const checkRealY = (realY) => {
 
 //переводит координату х функции в координату х экрана
 const xChangeToScreen = (x) =>{
-	return (x-minX)*scaleX + indent;
+	return Math.round((x-minX)*scaleX + indent);
 }
 
 //переводит координату y функции в координату y экрана
 const yChangeToScreen = (y) =>{
-	return (maxY - y)*scaleY + indent;
+	return Math.round((maxY - y)*scaleY + indent);
 }
 
 //проверка галочки auto
