@@ -1,23 +1,30 @@
 'use strict';
 
+//Число π
+const PI = Math.PI;
+const π = PI;
+
 //Функции без Math
 let abs = Math.abs;
 
 let cos = Math.cos;
-let acos = Math.acos;
+let arccos = Math.acos;
 let sin = Math.sin;
-let asin = Math.asin;
-let tan = Math.tan;
-let atan = Math.atan;
-let ctan = (x) => {
-	return 1/Math.tan(x);
+let arcsin = Math.asin;
+let tg = Math.tan;
+let arctg = Math.atan;
+let ctg= (x) => {
+	return 1/tg(x);
+};
+let arcctg = (x) => {
+	return ((PI/2) - arctg(x));
 };
 
 let pow = Math.pow;
 let sqrt = Math.sqrt;
 
 let exp = Math.exp;
-let log = Math.log;
+let ln = Math.log;
 
 //глобальные переменные
 let canvas;
