@@ -75,10 +75,6 @@ const init = () => {
 	clientHeight = canvas.clientHeight;
 	clientWidth = canvas.clientWidth;
 	ctx.clearRect(0, 0, clientWidth, clientHeight);
-	ctx.fillStyle = '#000000';
-	ctx.strokeRect(0, 0, clientWidth, clientHeight);
-	ctx.strokeStyle = '#AAAAAA';
-	ctx.strokeRect(indent, indent, clientWidth-2*indent, clientHeight-2*indent);
 	
 	//получение наибольших и наименьших х и у (в координатах функции)
 	minX = Number(document.getElementById('minX').value);
@@ -123,6 +119,12 @@ const init = () => {
 			throw new Error('Uncorrect Y value');
 		};
 	}
+	
+	
+	ctx.fillStyle = '#000000';
+	ctx.strokeRect(0, 0, clientWidth, clientHeight);
+	ctx.strokeStyle = '#AAAAAA';
+	ctx.strokeRect(indent, indent, clientWidth-2*indent, clientHeight-2*indent);
 
 	//подсчет коэффициентов для масштабирования графика
 	scaleX = (clientWidth-2*indent)/(maxX-minX);    
