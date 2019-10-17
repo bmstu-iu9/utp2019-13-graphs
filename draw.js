@@ -75,10 +75,6 @@ const init = () => {
 	clientHeight = canvas.clientHeight;
 	clientWidth = canvas.clientWidth;
 	ctx.clearRect(0, 0, clientWidth, clientHeight);
-	ctx.fillStyle = '#000000';
-	ctx.strokeRect(0, 0, clientWidth, clientHeight);
-	ctx.strokeStyle = '#AAAAAA';
-	ctx.strokeRect(indent, indent, clientWidth-2*indent, clientHeight-2*indent);
 	
 	//получение наибольших и наименьших х и у (в координатах функции)
 	minX = Number(document.getElementById('minX').value);
@@ -107,6 +103,15 @@ const init = () => {
 		}
 		minY = Math.floor(minY);
 		maxY = Math.ceil(maxY);
+		if(minY == maxY){
+			if(minY == 0){
+				minY = -1;
+				maxY = 1;
+			} else {
+				minY = minY - Math.abs(minY/2);
+				maxY = maxY + Math.abs(maxY/2);
+			}
+		}
 	} else{
 		minY = Number(document.getElementById('minY').value);
 		maxY = Number(document.getElementById('maxY').value);
@@ -114,6 +119,12 @@ const init = () => {
 			throw new Error('Uncorrect Y value');
 		};
 	}
+	
+	
+	ctx.fillStyle = '#000000';
+	ctx.strokeRect(0, 0, clientWidth, clientHeight);
+	ctx.strokeStyle = '#AAAAAA';
+	ctx.strokeRect(indent, indent, clientWidth-2*indent, clientHeight-2*indent);
 
 	//подсчет коэффициентов для масштабирования графика
 	scaleX = (clientWidth-2*indent)/(maxX-minX);    
@@ -184,11 +195,18 @@ const epsEqu = (x, y) => {
 
 const drawPointLimit = (realPrevX, realCurX, maxDrawPoint) => {
 	let countDrawPoiunt = 0;
+	//ограничим уровень вложенности для ограничения времени работы
+	let level = 0;
+	
 
 	const drawPoint = (realPrevX, realCurX) => {
-		if (countDrawPoiunt >= maxDrawPoint ) {
+		if (countDrawPoiunt >= maxDrawPoint) { 
 			return; // Если у нас колебaтельные движения, то надо ограничить количество рассчитываемых точек
 		}
+		if(level > 1000){
+			return; //Если вложенность слишком большая 
+		}
+		++level;
 		const realPrevY = expr(realPrevX);
 		const realCurY = expr(realCurX);
 		if ((checkRealY(realPrevY) || checkRealY(realCurY))) {
@@ -214,6 +232,7 @@ const drawPointLimit = (realPrevX, realCurX, maxDrawPoint) => {
 				}
 			}		
 		}
+		--level;
 	}
 	drawPoint(realPrevX, realCurX);
 }
